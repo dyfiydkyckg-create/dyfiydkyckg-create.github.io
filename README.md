@@ -1,15 +1,35 @@
-# GitHub 10K
+# 10K Follow Assistant
 
-داشبورد فارسی برای پیگیری هدف شخصی رسیدن حساب `dyfiydkyckg-create` به ۱۰٬۰۰۰ Following.
+رابط GitHub Pages به‌تنهایی نمی‌تواند Client Secret را امن نگه دارد. برای همین رابط سایت از طریق Cloudflare Worker سرو می‌شود و Worker ورود GitHub و درخواست‌های API را سمت سرور انجام می‌دهد.
 
-## اجرا
-فایل `index.html` را در مرورگر باز کن یا GitHub Pages را برای مخزن فعال کن. داشبورد تعداد Following را از API عمومی پروفایل GitHub می‌خواند و درصد پیشرفت و تعداد باقی‌مانده را نشان می‌دهد.
+## فایل‌ها
+- `index.html`: رابط فارسی و موبایل‌پسند.
+- `worker.js`: واسط امن OAuth و GitHub API.
 
-## محدوده و ایمنی
-- فقط داده عمومی پروفایل خوانده می‌شود.
-- هیچ توکن یا رمز عبوری در مرورگر ذخیره نمی‌شود.
-- ابزار هیچ حسابی را خودکار Follow یا Unfollow نمی‌کند.
-- دنبال‌کردن حساب‌ها باید آگاهانه و دستی باشد؛ محدودیت‌ها و قوانین GitHub را رعایت کن.
+## راه‌اندازی یک‌باره Cloudflare
 
-## انتشار با GitHub Pages
-در تنظیمات مخزن، از بخش **Pages**، گزینه **Deploy from a branch** را انتخاب کن، شاخه `main` و پوشه `/ (root)` را تنظیم و ذخیره کن.
+1. در Cloudflare وارد **Workers & Pages** شو و **Create application → Create Worker** را بزن.
+2. نام Worker را مثلاً `follow-assistant` بگذار و Deploy کن.
+3. از صفحه Worker گزینه **Edit code** را بزن، محتوای فایل `worker.js` این مخزن را جایگزین کد نمونه کن و Deploy کن.
+4. از **Settings → Variables and Secrets** این موارد را اضافه کن:
+   - متغیر معمولی با نام `GITHUB_CLIENT_ID` و مقدار Client ID برنامه OAuth.
+   - متغیر از نوع **Secret** با نام `GITHUB_CLIENT_SECRET` و مقدار Client Secret برنامه OAuth.
+   سپس Deploy کن.
+5. آدرس Worker معمولاً شبیه `https://follow-assistant.<account>.workers.dev` است. آن را باز کن؛ Worker رابط سایت GitHub Pages را از همان مبدأ نمایش می‌دهد.
+6. در تنظیمات OAuth App در GitHub:
+   - **Homepage URL** را برابر آدرس Worker قرار بده.
+   - **Authorization callback URL** را برابر آدرس Worker به‌اضافه `/callback` قرار بده؛ مثلاً `https://follow-assistant.<account>.workers.dev/callback`.
+   - ذخیره کن.
+
+بعد از این تنظیمات، فقط از آدرس Worker استفاده کن، نه آدرس مستقیم GitHub Pages. دکمه ورود باید به GitHub برود و پس از تأیید به سایت برگردد.
+
+## امنیت
+- Client Secret را فقط به‌صورت Secret در Cloudflare وارد کن؛ آن را در GitHub، فایل‌ها، مرورگر یا چت قرار نده.
+- توکن GitHub در کوکی `HttpOnly; Secure; SameSite=Lax` نگهداری می‌شود و JavaScript صفحه به آن دسترسی ندارد.
+- مجوز درخواستی `user:follow` است.
+- هر Follow جداگانه با تأیید کاربر انجام می‌شود؛ فالو انبوه خودکار وجود ندارد.
+- اگر Client Secret قبلاً جایی عمومی شده، آن را در تنظیمات GitHub باطل و Secret جدید بساز.
+
+## مستندات رسمی
+- GitHub OAuth web application flow: https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps
+- Cloudflare Worker secrets: https://developers.cloudflare.com/workers/configuration/secrets/
